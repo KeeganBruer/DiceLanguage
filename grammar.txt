@@ -1,0 +1,63 @@
+statements		: NEWLINE* statement (NEWLINE+ statement)* NEWLINE*
+
+statement		: KEYWORD:return expr?
+				: KEYWORD:continue
+				: KEYWORD:break
+				: expr
+	
+expr			: KEYWORD:let IDENTIFIER EQ expr
+				: IDENTIFIER EQ expr
+				: comp-expr ((KEYWORD:and|KEYWORD:or) comp-expr)*
+	
+comp-expr		: KEYWORD:not comp-expr
+				: arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
+				
+arith-expr		: term ((PLUS|MINUS) term)*
+	
+term			: factor ((MUL|DIV|MOD) factor)*
+	
+factor			: (PLUS|MINUS) factor
+				: dice_expr
+		
+	
+dice_expr		: power (DICE factor)?
+
+power			: call (POW factor)*
+	
+call			: atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
+		
+atom			: INT|FLOAT|STRING
+				: LPAREN expr RPAREN
+				: list_acc_expr
+				: list-expr
+				: dict-expr	
+				: if-expr
+				: for-expr
+				: while-expr
+				: func-def
+				: dice_expr
+				
+				
+list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)
+
+list-expr		: LSQUARE (expr (COMMA expr)*)? RSQUARE
+
+dict-expr		: LBRAC (dict-item (COMMA dict-item)*)? RBRAC
+
+dict-item		: atom COLON expr
+
+if-expr			: KEYWORD:if expr (NEWLINE)? (LBRAC statements RBRAC | expr)
+				(KEYWORD:else (NEWLINE)? (LBRAC statements RBRAC | if-expr | expr)?
+				
+for-expr		: KEYWORD:for IDENTIFIER EQ expr KEYWORD:to expr 
+				(KEYWORD:step expr)? RBRAC statements RBRAC
+
+while-expr		: KEYWORD:while expr RBRAC statements RBRAC
+	
+func-def		: KEYWORD:function IDENTIFIER?
+				LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
+				LBRAC statements RBRAC
+
+
+
+dice			: power (KEYWORD:d atom)?
