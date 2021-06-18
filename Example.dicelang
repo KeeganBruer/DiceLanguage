@@ -1,46 +1,34 @@
-function character() {
-	let user_info = {
-		"ac": 10,
-		"hp": 100
-	}
-	return user_info
-}
-
-function main() {
-	let target = character()
-	bow_attack(1, 1, target)
-	return null
-}
-
-function bow_attack(number, advantage_count, target) {
-	let rolls = [] + (number * (advantage_count+1))d20
-	let inc = (advantage_count+1)
-	if advantage_count < 0 {
-		rolls = [] + (number * ((-1 *advantage_count)+1))d20
-		inc = (-1 *advantage_count)+1
-	}
-	let damage = []
-	for i = 0 to len(rolls) step inc {
-		let did_hit = false
-		let disadv_roll = 20
-		for j = 0 to inc {
-			if (advantage_count >=0 and rolls[i+j] > target["ac"]) {
-				did_hit = true
-			} else if (advantage_count < 0 and rolls[i+j] < disadv_roll) {
-				disadv_roll = rolls[i+j]
+function Character() {	
+	this.hp = 100
+	
+	this.bow_attack = function(number, advantage_count, target) {
+		let rolls = [] + (number * (advantage_count+1))d20
+		let inc = (advantage_count+1)
+		if advantage_count < 0 {
+			rolls = [] + (number * ((-1 *advantage_count)+1))d20
+			inc = (-1 *advantage_count)+1
+		}
+		let damage = []
+		for i = 0 to len(rolls) step inc {
+			let did_hit = false
+			let disadv_roll = 20
+			for j = 0 to inc {
+				if (advantage_count >=0 and rolls[i+j] > target["ac"]) {
+					did_hit = true
+				} else if (advantage_count < 0 and rolls[i+j] < disadv_roll) {
+					disadv_roll = rolls[i+j]
+				}
+			}
+			if (advantage_count >=0 and did_hit) {
+				damage += 1d6
+			} else if (advantage_count < 0 and disadv_roll > target["ac"]) {
+				damage += 1d6
 			}
 		}
-		if (advantage_count >=0 and did_hit) {
-			damage += 1d6
-		} else if (advantage_count < 0 and disadv_roll > target["ac"]) {
-			damage += 1d6
-		}
+		let attack =  ["Bow Attack", rolls, damage, sum(damage)]
+		print_attack(attack)
 	}
-	let attack =  ["Bow Attack", rolls, damage, sum(damage)]
-	print_attack(attack)
-	return attack
 }
-
 
 
 function sum(a) {
@@ -64,6 +52,10 @@ function print_attack(attack) {
 	println(attack[3])
 }
 
+let char = Character()
+let char2 = Character()
+char2.hp = 30
+println(char)
+println(char2)
+char.bow_attack(2, 1, {"ac":10})
 
-
-main()

@@ -42,7 +42,7 @@ dict-expr		: LBRAC (dict-item (COMMA dict-item)*)? RBRAC
 
 dict-item		: atom COLON expr
 
-list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)?
+list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)*
 
 list-expr		: LSQUARE (expr (COMMA expr)*)? RSQUARE
 

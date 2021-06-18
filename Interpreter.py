@@ -1,4 +1,4 @@
-from Nodes import NumberNode
+from Nodes import *
 from Tokens import Token
 from Errors import RTError
 from Context import *
@@ -31,18 +31,27 @@ class Interpreter():
         return res.success(value)
     def visit_ListAccessNode(self, node, context):
         res = RTResult()
-        var_name = node.var_name_tok.value
-        value = context.symbol_table.get(var_name)
-        if not value:
-            return res.failure(RTError(
-                node.pos_start, node.pos_end,
-                "'{0}' is not defined".format(var_name),
-                context
-            ))
-        access_pos = res.register(self.visit(node.pos_tok, context))
-        value, error = value.get(access_pos)
-        if error: return res.failure(error)
-        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
+        if isinstance(node.var_name_tok, ListAccessNode):
+            var_name = res.register(self.visit(node.var_name_tok, context))
+        else:
+            var_name = node.var_name_tok.value
+        if isinstance(var_name, List) or isinstance(var_name, Dict):
+            access_pos = res.register(self.visit(node.pos_tok, context))
+            value, error = var_name.get(access_pos)
+            if error: return res.failure(error)
+            value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
+        else:
+            value = context.symbol_table.get(var_name)
+            if not value:
+                return res.failure(RTError(
+                    node.pos_start, node.pos_end,
+                    "'{0}' is not defined".format(var_name),
+                    context
+                ))
+            access_pos = res.register(self.visit(node.pos_tok, context))
+            value, error = value.get(access_pos)
+            if error: return res.failure(error)
+            value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(value)
     def visit_DictAccessNode(self, node, context):
         res = RTResult()
@@ -711,12 +720,12 @@ class Function(BaseFunction):
         interpreter = Interpreter()
        
         exec_context = self.generate_new_context()
-        
+        exec_context.symbol_table.set("this", Dict({}))
         self.check_and_populate_args(self.arg_names, args, exec_context)
         
         value = res.register(interpreter.visit(self.body_node, exec_context))
         if res.should_return() and res.func_rtn_value == None: return res
-        ret_value = (value if self.should_auto_return else None) or res.func_rtn_value or Number.null
+        ret_value = (value if self.should_auto_return else None) or res.func_rtn_value or (exec_context.symbol_table.get("this") if exec_context.symbol_table.get("this").elements != {} else Number.null)
         return res.success(ret_value)
     def copy(self):
         copy = Function(self.name, self.body_node, self.arg_names, self.should_auto_return)

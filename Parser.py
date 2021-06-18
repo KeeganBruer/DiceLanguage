@@ -488,7 +488,7 @@ class Parser():
     #############################
     ##
     ##  
-    ##  list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)?
+    ##  list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)*
     ##    
     ############################# 
     def list_acc_expr(self):
@@ -501,31 +501,39 @@ class Parser():
         tok = self.current_tok
         res.register_advancement()
         self.advance()
-        if self.current_tok.matches(Token.TT_LSQUARE):
-            res.register_advancement()
-            self.advance()
-            pos_expr = res.register(self.expr())
-            if res.should_return(): return res
-            if not self.current_tok.matches(Token.TT_RSQUARE):
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected ']'"
-                ))
-            res.register_advancement()
-            self.advance()
-            return res.success(ListAccessNode(tok, pos_expr))
-        elif self.current_tok.matches(Token.TT_DOT):
-            res.register_advancement()
-            self.advance()
-            if not self.current_tok.matches(Token.TT_IDENTIFIER):
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected identifier"
-                ))
-            access_tok = StringNode(self.current_tok)
-            res.register_advancement()
-            self.advance()
-            return res.success(ListAccessNode(tok, access_tok))
+        is_accessed = False
+        while True:
+            if self.current_tok.matches(Token.TT_LSQUARE):
+                is_accessed = True
+                res.register_advancement()
+                self.advance()
+                pos_expr = res.register(self.expr())
+                if res.should_return(): return res
+                if not self.current_tok.matches(Token.TT_RSQUARE):
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected ']'"
+                    ))
+                res.register_advancement()
+                self.advance()
+                tok = ListAccessNode(tok, pos_expr)
+            elif self.current_tok.matches(Token.TT_DOT):
+                is_accessed = True
+                res.register_advancement()
+                self.advance()
+                if not self.current_tok.matches(Token.TT_IDENTIFIER):
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected identifier"
+                    ))
+                access_tok = StringNode(self.current_tok)
+                res.register_advancement()
+                self.advance()
+                tok = ListAccessNode(tok, access_tok)
+            else:
+                break
+        if is_accessed:
+            return res.success(tok)
         return res.success(VarAccessNode(tok))
     #############################
     ##
