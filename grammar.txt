@@ -20,7 +20,8 @@ factor			: (PLUS|MINUS) factor
 				: dice_expr
 		
 	
-dice_expr		: power (DICE factor)?
+dice_expr		: DICE factor
+				: power (DICE factor)?
 
 power			: call (POW factor)*
 	
