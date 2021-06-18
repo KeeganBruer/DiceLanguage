@@ -1,3 +1,4 @@
+from Tokens import Token
 class Node:
     def __init__(self):
         pass
@@ -39,7 +40,7 @@ class DictNode(Node):
             res += " : "
             res += str(self.dictionary[key]) 
         return "({" + res + "})"
-     
+  
 class ListAccessNode(Node):
     def __init__(self, var_name_tok, pos_tok):
         self.var_name_tok = var_name_tok

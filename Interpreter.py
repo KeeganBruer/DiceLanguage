@@ -393,6 +393,13 @@ class Number(Value):
     def added_to(self, other):
         if isinstance(other, Number):
             return Number(self.value + other.value).set_context(self.context), None
+        elif isinstance(other, List):
+            sum = 0
+            for i in range(len(other.elements)):
+                if isinstance(other.elements[i], Number):
+                    sum += other.elements[i].value
+            sum += self.value
+            return Number(sum).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
     def subbed_by(self, other):

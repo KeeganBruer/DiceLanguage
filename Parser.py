@@ -514,6 +514,14 @@ class Parser():
         return self.bin_op(self.call, (Token.TT_POW, ), self.factor)
         
     def dice(self):
+        res = ParseResult()
+        if self.current_tok.matches(Token.TT_DICE):
+            op_tok = self.current_tok
+            res.register_advancement()
+            self.advance()
+            right = res.register(self.factor())
+            if res.error: return res
+            return res.success(BinOpNode(NumberNode(Token(Token.TT_INT, 1, op_tok.pos_start, op_tok.pos_end)), op_tok, right))
         return self.bin_op(self.power, (Token.TT_DICE, ), self.factor)
     def factor(self):
         res = ParseResult()
