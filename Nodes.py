@@ -48,6 +48,13 @@ class ListAccessNode(Node):
         
         self.pos_start = var_name_tok.pos_start
         self.pos_end = var_name_tok.pos_end
+class DictAccessNode(Node):
+    def __init__(self, var_name_tok, access_tok):
+        self.var_name_tok = var_name_tok
+        self.access_tok = access_tok
+        
+        self.pos_start = var_name_tok.pos_start
+        self.pos_end = var_name_tok.pos_end
         
 class VarAccessNode(Node):
     def __init__(self, var_name_tok):
@@ -64,6 +71,14 @@ class VarAssignNode(Node):
 class VarReassignNode(Node):
     def __init__(self, var_name_tok, op_tok, value_node):
         self.var_name_tok = var_name_tok
+        self.value_node = value_node
+        self.op_tok = op_tok
+        self.pos_start = var_name_tok.pos_start
+        self.pos_end = value_node.pos_end
+class ListReassignNode(Node):
+    def __init__(self, var_name_tok, access_tok, op_tok, value_node):
+        self.var_name_tok = var_name_tok
+        self.access_tok = access_tok
         self.value_node = value_node
         self.op_tok = op_tok
         self.pos_start = var_name_tok.pos_start

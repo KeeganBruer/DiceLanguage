@@ -29,6 +29,7 @@ class Token():
     TT_LSQUARE      = "TT_LSQUARE"
     TT_RSQUARE      = "TT_RSQUARE"
     TT_COMMA        = "TT_COMMA"
+    TT_DOT          = "TT_DOT"
     TT_COLON        = "TT_COLON"
     TT_ARROW        = "TT_ARROW"
     TT_NEWLINE      = "TT_NEWLINE"

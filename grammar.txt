@@ -6,7 +6,7 @@ statement		: KEYWORD:return expr?
 				: expr
 	
 expr			: KEYWORD:let IDENTIFIER EQ expr
-				: IDENTIFIER EQ expr
+				: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)? EQ expr
 				: comp-expr ((KEYWORD:and|KEYWORD:or) comp-expr)*
 	
 comp-expr		: KEYWORD:not comp-expr
@@ -39,7 +39,7 @@ atom			: INT|FLOAT|STRING
 				: dice_expr
 				
 				
-list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)
+list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)?
 
 list-expr		: LSQUARE (expr (COMMA expr)*)? RSQUARE
 

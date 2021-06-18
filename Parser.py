@@ -342,6 +342,18 @@ class Parser():
             res.register_advancement()
             self.advance()
             return res.success(ListAccessNode(tok, pos_expr))
+        elif self.current_tok.matches(Token.TT_DOT):
+            res.register_advancement()
+            self.advance()
+            if not self.current_tok.matches(Token.TT_IDENTIFIER):
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected identifier"
+                ))
+            access_tok = StringNode(self.current_tok)
+            res.register_advancement()
+            self.advance()
+            return res.success(ListAccessNode(tok, access_tok))
         return res.success(VarAccessNode(tok))
     def dict_expr(self):
         res = ParseResult()
@@ -586,17 +598,51 @@ class Parser():
             var_name = self.current_tok
             res.register_advancement()
             self.advance()
-            
+            access_tok = None
+            reverse_count = 1
+            #START
+            if self.current_tok.matches(Token.TT_LSQUARE):
+                res.register_advancement()
+                self.advance()
+                reverse_count += 1
+                save_pos = res.advance_count
+                access_tok = res.try_register(self.expr())
+                reverse_count += (res.advance_count - save_pos)
+                if res.should_return(): return res
+                if not self.current_tok.matches(Token.TT_RSQUARE):
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected ']'"
+                    ))
+                res.register_advancement()
+                self.advance()
+                reverse_count += 1
+            elif self.current_tok.matches(Token.TT_DOT):
+                res.register_advancement()
+                self.advance()
+                reverse_count += 1
+                if not self.current_tok.matches(Token.TT_IDENTIFIER):
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected identifier"
+                    ))
+                access_tok = StringNode(self.current_tok)
+                res.register_advancement()
+                self.advance()
+                reverse_count += 1
+            #END
             if self.current_tok.type in (Token.TT_EQ, Token.TT_PLUSEQ):
                 op_tok = self.current_tok
                 res.register_advancement()
                 self.advance()
                 
-                expr = res.register(self.expr())
+                expr = res.try_register(self.expr())
                 if res.error: return res
+                if access_tok != None:
+                    return res.success(ListReassignNode(var_name, access_tok, op_tok, expr))
                 return res.success(VarReassignNode(var_name, op_tok, expr))
             res.register_reverse()
-            self.reverse()
+            self.reverse(reverse_count)
         node =  res.register(self.bin_op(self.comp_expr, ((Token.TT_KEYWORD, "and"),(Token.TT_KEYWORD, "or"))))
         if res.error:
             return res.failure(InvalidSyntaxError(
