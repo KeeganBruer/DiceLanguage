@@ -6,7 +6,7 @@ statement		: KEYWORD:return expr?
 				: expr
 	
 expr			: KEYWORD:let IDENTIFIER EQ expr
-				: IDENTIFIER EQ expr
+				: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)? EQ expr
 				: comp-expr ((KEYWORD:and|KEYWORD:or) comp-expr)*
 	
 comp-expr		: KEYWORD:not comp-expr
@@ -37,28 +37,25 @@ atom			: INT|FLOAT|STRING
 				: while-expr
 				: func-def
 				: dice_expr
-				
-				
-list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)
-
-list-expr		: LSQUARE (expr (COMMA expr)*)? RSQUARE
 
 dict-expr		: LBRAC (dict-item (COMMA dict-item)*)? RBRAC
 
 dict-item		: atom COLON expr
 
-if-expr			: KEYWORD:if expr (NEWLINE)? (LBRAC statements RBRAC | expr)
-				(KEYWORD:else (NEWLINE)? (LBRAC statements RBRAC | if-expr | expr)?
-				
-for-expr		: KEYWORD:for IDENTIFIER EQ expr KEYWORD:to expr 
-				(KEYWORD:step expr)? RBRAC statements RBRAC
+list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)?
 
-while-expr		: KEYWORD:while expr RBRAC statements RBRAC
-	
+list-expr		: LSQUARE (expr (COMMA expr)*)? RSQUARE
+
 func-def		: KEYWORD:function IDENTIFIER?
 				LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
 				LBRAC statements RBRAC
+				
+while-expr		: KEYWORD:while expr RBRAC statements RBRAC
 
+for-expr		: KEYWORD:for (LPAREN expr NEWLINE expr NEWLINE expr RPAREN | IDENTIFIER KEYWORD:in expr ) (NEWLINE)? 
+				  (LBRAC statements RBRAC | expr) 
+				
+if-expr			: KEYWORD:if expr (NEWLINE)? (LBRAC statements RBRAC | expr) 
+				(KEYWORD:else (NEWLINE)? (LBRAC statements RBRAC | if-expr | expr)?
+				
 
-
-dice			: power (KEYWORD:d atom)?

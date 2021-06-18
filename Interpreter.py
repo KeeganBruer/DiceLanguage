@@ -44,6 +44,21 @@ class Interpreter():
         if error: return res.failure(error)
         value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(value)
+    def visit_DictAccessNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = context.symbol_table.get(var_name)
+        if not value:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                "'{0}' is not defined".format(var_name),
+                context
+            ))
+        access_pos = String(node.access_tok.value)
+        value, error = value.get(access_pos)
+        if error: return res.failure(error)
+        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
+        return res.success(value)
     def visit_VarAssignNode(self, node, context):
         res = RTResult()
         var_name = node.var_name_tok.value
@@ -74,6 +89,27 @@ class Interpreter():
         if node.op_tok.matches(Token.TT_PLUSEQ):
             new_value = var_exist
             new_value.added_to(value)
+        context.symbol_table.set(var_name, new_value, True)
+        return res.success(Number.null)
+    def visit_ListReassignNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = res.register(self.visit(node.value_node, context))
+        if res.should_return(): return res
+        var_exist = context.symbol_table.get(var_name)
+        if not var_exist:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                "{0} has not yet been defined".format(var_name),
+                context
+            ))
+        access_val = res.register(self.visit(node.access_tok, context))
+        new_value = var_exist
+        if node.op_tok.matches(Token.TT_PLUSEQ):
+            old_value = var_exist.get(access_val)
+            new_value.set(access_val, old_value[0].added_to(value)[0])
+        else:
+            new_value.set(access_val, value)
         context.symbol_table.set(var_name, new_value, True)
         return res.success(Number.null)
         
@@ -559,6 +595,11 @@ class List(Value):
             element = self.elements[other.value]
             return element.set_context(self.context), None
         return None, Value.illegal_operation(self, other)
+    def set(self, other, value):
+        if isinstance(other, Number):
+            self.elements[other.value] = value
+            return self.copy(), None
+        return None, Value.illegal_operation(self, other)
     def is_true(self):
         return len(self.elements) > 0
     def copy(self):
@@ -588,6 +629,14 @@ class Dict(Value):
         if isinstance(other, Number) or isinstance(other, String):
             element = self.elements[other.value]
             return element.set_context(self.context), None
+        return None, Value.illegal_operation(self, other)
+    def set(self, other, value):
+        if isinstance(other, Number):
+            self.elements[other.value] = value
+            return self.copy(), None
+        if isinstance(other, String):
+            self.elements[other.value] = value
+            return self.copy(), None
         return None, Value.illegal_operation(self, other)
     def is_true(self):
         return len(self.elements) > 0

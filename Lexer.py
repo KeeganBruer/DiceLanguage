@@ -97,6 +97,9 @@ class Lexer():
             elif self.current_char == ",":
                 tokens.append(Token(Token.TT_COMMA, pos_start=self.pos))
                 self.advance()
+            elif self.current_char == ".":
+                tokens.append(Token(Token.TT_DOT, pos_start=self.pos))
+                self.advance()
             elif self.current_char == ":":
                 tokens.append(Token(Token.TT_COLON, pos_start=self.pos))
                 self.advance()
