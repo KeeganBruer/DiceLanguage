@@ -18,6 +18,14 @@ class Parser():
     def update_current_tok(self):
         if self.tok_idx < len(self.tokens):
             self.current_tok = self.tokens[self.tok_idx]
+    #############################
+    ##
+    ##  
+    ##  parse method - Method called to parse the tokens provided. 
+    ##      Registers a call to the statements grammar rule and 
+    ##      returns the parse result if there are no errors.
+    ##    
+    ############################# 
     def parse(self):
         res = self.statements()
         if not res.error and not self.current_tok.matches(Token.TT_EOF):
@@ -29,6 +37,13 @@ class Parser():
                 )
             )
         return res
+    #############################
+    ##
+    ##  
+    ##  if-expr			: KEYWORD:if expr (NEWLINE)? (LBRAC statements RBRAC | expr) 
+	##		          	 (KEYWORD:else (NEWLINE)? (LBRAC statements RBRAC | if-expr | expr)?
+    ##    
+    ############################# 
     def if_expr(self):
         res = ParseResult()
         cases = []
@@ -103,6 +118,13 @@ class Parser():
                 self.reverse(res.to_reverse_count)
             return res.success(IfNode(cases, else_case))
         return res.success(IfNode(cases, None))
+    #############################
+    ##
+    ##  
+    ##  for-expr		: KEYWORD:for (LPAREN expr NEWLINE expr NEWLINE expr RPAREN | IDENTIFIER KEYWORD:in expr ) (NEWLINE)? 
+	##      			 (LBRAC statements RBRAC | expr) 
+    ##    
+    ############################# 
     def for_expr(self):
         res = ParseResult()
         if not self.current_tok.matches(Token.TT_KEYWORD, "for"):
@@ -171,7 +193,12 @@ class Parser():
         self.advance()
         
         return res.success(ForNode(var_name, start_value, end_value, step_value, body_node))
-        
+    #############################
+    ##
+    ##  
+    ##  while-expr		: KEYWORD:while expr RBRAC statements RBRAC
+    ##    
+    #############################     
     def while_expr(self):
         res = ParseResult()
         if not self.current_tok.matches(Token.TT_KEYWORD, "while"):
@@ -205,6 +232,14 @@ class Parser():
         self.advance()
         
         return res.success(WhileNode(condition, body_node))
+    #############################
+    ##
+    ##  
+    ##  func-def		: KEYWORD:function IDENTIFIER?
+	##			          LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
+	##			          LBRAC statements RBRAC
+    ##    
+    ############################# 
     def func_def(self):
         res = ParseResult()
         if not self.current_tok.matches(Token.TT_KEYWORD, "function"):
@@ -284,6 +319,12 @@ class Parser():
         res.register_advancement()
         self.advance()
         return res.success(FuncDefNode(var_name_tok, args_name_toks, node_to_return, False))
+    #############################
+    ##
+    ##  
+    ##  list-expr		: LSQUARE (expr (COMMA expr)*)? RSQUARE
+    ##    
+    ############################# 
     def list_expr(self):
         res = ParseResult()
         element_nodes = []
@@ -319,6 +360,12 @@ class Parser():
             res.register_advancement()
             self.advance()
         return res.success(ListNode(element_nodes, pos_start, self.current_tok.pos_end))
+    #############################
+    ##
+    ##  
+    ##  list_acc_expr	: IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)?
+    ##    
+    ############################# 
     def list_acc_expr(self):
         res = ParseResult()
         if not self.current_tok.matches(Token.TT_IDENTIFIER):
@@ -355,6 +402,12 @@ class Parser():
             self.advance()
             return res.success(ListAccessNode(tok, access_tok))
         return res.success(VarAccessNode(tok))
+    #############################
+    ##
+    ##  
+    ##  dict-expr		: LBRAC (dict-item (COMMA dict-item)*)? RBRAC
+    ##    
+    ############################# 
     def dict_expr(self):
         res = ParseResult()
         dictionary = {}
@@ -421,6 +474,21 @@ class Parser():
             res.register_advancement()
             self.advance()
         return res.success(DictNode(dictionary, pos_start, self.current_tok.pos_end))
+    #############################
+    ##
+    ##  
+    ##  atom			: INT|FLOAT|STRING
+	##			        : LPAREN expr RPAREN
+	##			        : list_acc_expr
+	##			        : list-expr
+	##			        : dict-expr	
+	##			        : if-expr
+	##			        : for-expr
+	##			        : while-expr
+	##			        : func-def
+	##			        : dice_expr
+    ##    
+    ############################# 
     def atom(self):
         res = ParseResult()
         tok = self.current_tok
@@ -488,6 +556,12 @@ class Parser():
                 "Expected int, float, identifier, '+', '-', or '('"
             )
         )
+    #############################
+    ##
+    ##  
+    ##  call			: atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
+    ##    
+    ############################# 
     def call(self):
         res = ParseResult()
         atom = res.register(self.atom())
@@ -521,11 +595,22 @@ class Parser():
                 self.advance()
             return res.success(CallFuncNode(atom, arg_nodes))
         return res.success(atom)
-                
+    #############################
+    ##
+    ##  
+    ##  power			: call (POW factor)*
+    ##    
+    #############################             
     def power(self):
         return self.bin_op(self.call, (Token.TT_POW, ), self.factor)
-        
-    def dice(self):
+    #############################
+    ##
+    ##  
+    ##  dice_expr		: DICE factor
+	##	        		: power (DICE factor)?
+    ##    
+    #############################     
+    def dice_expr(self):
         res = ParseResult()
         if self.current_tok.matches(Token.TT_DICE):
             op_tok = self.current_tok
@@ -535,6 +620,13 @@ class Parser():
             if res.error: return res
             return res.success(BinOpNode(NumberNode(Token(Token.TT_INT, 1, op_tok.pos_start, op_tok.pos_end)), op_tok, right))
         return self.bin_op(self.power, (Token.TT_DICE, ), self.factor)
+    #############################
+    ##
+    ##  
+    ##  factor			: (PLUS|MINUS) factor
+	##      			: dice_expr
+    ##    
+    ############################# 
     def factor(self):
         res = ParseResult()
         tok = self.current_tok
@@ -545,12 +637,30 @@ class Parser():
             if res.error: return res
             return res.success(UnaryOpNode(tok, factor))
         
-        return self.dice()
-        
+        return self.dice_expr()
+    #############################
+    ##
+    ##  
+    ##  term			: factor ((MUL|DIV|MOD) factor)*
+    ##    
+    #############################   
     def term(self):
         return self.bin_op(self.factor, (Token.TT_MUL, Token.TT_DIV, Token.TT_MOD))
+    #############################
+    ##
+    ##  
+    ##  arith-expr		: term ((PLUS|MINUS) term)*
+    ##    
+    #############################
     def arith_expr(self):
         return self.bin_op(self.term, (Token.TT_PLUS, Token.TT_MINUS))
+    #############################
+    ##
+    ##  
+    ##  comp-expr		: KEYWORD:not comp-expr
+	##			        : arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
+    ##    
+    #############################
     def comp_expr(self):
         res = ParseResult()
         if self.current_tok.matches(Token.TT_KEYWORD, "not"):
@@ -569,6 +679,14 @@ class Parser():
                 "int, float, identifier, '+', '-', '(', or 'not'" + res.error.details
             ))
         return res.success(node)
+    #############################
+    ##
+    ##  
+    ##  expr			: KEYWORD:let IDENTIFIER EQ expr
+	##			        : IDENTIFIER ((LSQUARE expr RSQUARE)* | (DOT IDENTIFIER)*)? EQ expr
+	##			        : comp-expr ((KEYWORD:and|KEYWORD:or) comp-expr)*
+    ##    
+    #############################
     def expr(self):
         res = ParseResult()
         if self.current_tok.matches(Token.TT_KEYWORD, "let"):
@@ -600,7 +718,6 @@ class Parser():
             self.advance()
             access_tok = None
             reverse_count = 1
-            #START
             if self.current_tok.matches(Token.TT_LSQUARE):
                 res.register_advancement()
                 self.advance()
@@ -630,7 +747,6 @@ class Parser():
                 res.register_advancement()
                 self.advance()
                 reverse_count += 1
-            #END
             if self.current_tok.type in (Token.TT_EQ, Token.TT_PLUSEQ):
                 op_tok = self.current_tok
                 res.register_advancement()
@@ -650,6 +766,15 @@ class Parser():
                 "int, float, identifier, 'let', 'if', 'for', 'while', 'function', '+', '-', or '('"
             ))
         return res.success(node)
+    #############################
+    ##
+    ##  
+    ##  statement		: KEYWORD:return expr?
+    ##                  : KEYWORD:continue
+    ##                  : KEYWORD:break
+    ##                  : expr
+    ##    
+    #############################
     def statement(self):
         res = ParseResult()
         pos_start = self.current_tok.pos_start.copy()
@@ -675,6 +800,12 @@ class Parser():
                 "'Return', " + res.error.details
             ))
         return res.success(expr)
+    #############################
+    ##
+    ##  Parser Entry Grammar
+    ##  statements      : NEWLINE* statement (NEWLINE+ statement)* NEWLINE*
+    ##    
+    #############################
     def statements(self):
         res = ParseResult()
         statements = []
