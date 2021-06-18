@@ -11,4 +11,4 @@ Run a file
 >python shell.py ./Example.dicelang
 
 Run a file and then enter the interactive prompt
->python shell.py ./Example.dicelang
+>python shell.py ./Example.dicelang -i
