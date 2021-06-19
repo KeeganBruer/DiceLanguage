@@ -20,5 +20,8 @@ class SymbolTable():
                 self.parent.set(name, value, is_reassign)
                 return
         self.symbols[name] = value
+    def __repr__(self):
+        rtn = "{0}".format(self.symbols)
+        return rtn
     def remove(self, name):
         del self.symbols[name]

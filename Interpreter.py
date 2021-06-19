@@ -5,6 +5,8 @@ from Context import *
 import os
 import random
 class Interpreter():
+    def __init__(self):
+        self.test_id = 0
     def visit(self, node, context):
         method_name = "visit_{0}".format(type(node).__name__)
         method = getattr(self, method_name, self.no_visit_method)
@@ -257,11 +259,14 @@ class Interpreter():
         
     def visit_FuncDefNode(self, node, context):
         res = RTResult()
-        
+        if context.parent:
+            print(context.symbol_table)
         func_name = node.var_name_tok.value if node.var_name_tok else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.args_name_toks]
-        func_value = Function(func_name, body_node, arg_names, node.should_auto_return).set_context(context).set_pos(node.pos_start, node.pos_end)
+        func_value = Function(func_name, body_node, arg_names, node.should_auto_return)
+        func_value = func_value.set_context(context)
+        func_value = func_value.set_pos(node.pos_start, node.pos_end)
         
         if node.var_name_tok:
             context.symbol_table.set(func_name, func_value)
@@ -426,6 +431,11 @@ class Null(Value):
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
+    def comparison_eq(self, other):
+        if isinstance(other, Null):
+            return Number.true, None
+        else:
+            return None, Value.illegal_operation(self, other)
     def __eq__(self, other):
         return type(self) == type(other)
     def __ne__(self, other):
@@ -482,6 +492,8 @@ class Number(Value):
     def comparison_eq(self, other):
         if isinstance(other, Number):
             return Number(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, Null):
+            return Number.false.set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
     def comparison_ne(self, other):
@@ -559,6 +571,13 @@ class String(Value):
             return String(self.value + " * " + other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
+    def comparison_eq(self, other):
+        if isinstance(other, String):
+            return Number(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, Null):
+            return Number.false.set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
     def is_true(self):
         return len(self.value) > 0
     def copy(self):
@@ -599,6 +618,11 @@ class List(Value):
             return List(bool_arr).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
+    def comparison_eq(self, other):
+        if isinstance(other, Null):
+            return Number.false.set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
     def get(self, other):
         if isinstance(other, Number):
             element = self.elements[other.value]
@@ -634,6 +658,11 @@ class Dict(Value):
         if isinstance(other, Dict):
             pass
         return None, Value.illegal_operation(self, other)
+    def comparison_eq(self, other):
+        if isinstance(other, Null):
+            return Number.false.set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
     def get(self, other):
         if isinstance(other, Number) or isinstance(other, String):
             element = self.elements[other.value]
@@ -673,6 +702,7 @@ class BaseFunction(Value):
     def __init__(self, name):
         super().__init__()
         self.name = name or "<anonymous>"
+        self.is_anonymous = self.name == "<anonymous>"
     def generate_new_context(self):
         new_context = Context(self.name, self.context, self.pos_start)
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
@@ -693,14 +723,14 @@ class BaseFunction(Value):
             ))
         return res.success(None)
     def populate_args(self, arg_names, args, exec_ctx):
-        for i in range(len(args)):
+        for i in range(len(arg_names)):
             arg_name = arg_names[i]
-            arg_value = args[i]
+            arg_value = args[i] if i < len(args) else Number.null
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
     def check_and_populate_args(self, arg_names, args, exec_ctx):
         res = RTResult()
-        res.register(self.check_args(arg_names, args))
+        #res.register(self.check_args(arg_names, args))
         if res.should_return(): return res
         self.populate_args(arg_names, args, exec_ctx)
         return res.success(None)
@@ -708,24 +738,31 @@ class BaseFunction(Value):
         return type(self).__name__ == other
     def __ne__(self, other):
         return type(self).__name__ != other
-        
+       
 class Function(BaseFunction):
-    def __init__(self, name, body_node, arg_names, should_auto_return):
+    def __init__(self, name, body_node, arg_names, should_auto_return, parent=None):
         super().__init__(name)
         self.body_node = body_node
         self.arg_names = arg_names
         self.should_auto_return = should_auto_return
+        self.parent_context = parent
+        print(parent)
     def execute(self, args):
         res = RTResult()
         interpreter = Interpreter()
        
         exec_context = self.generate_new_context()
-        exec_context.symbol_table.set("this", Dict({}))
+        
+        #print("START {} END".format(self.context.symbol_table.get("this")))
+        if not self.is_anonymous:
+            exec_context.symbol_table.set("this", Dict({"context":self.parent_context}))
         self.check_and_populate_args(self.arg_names, args, exec_context)
         
         value = res.register(interpreter.visit(self.body_node, exec_context))
         if res.should_return() and res.func_rtn_value == None: return res
         ret_value = (value if self.should_auto_return else None) or res.func_rtn_value or (exec_context.symbol_table.get("this") if exec_context.symbol_table.get("this").elements != {} else Number.null)
+        print("wow")
+        print(exec_context.symbol_table.get("this"))
         return res.success(ret_value)
     def copy(self):
         copy = Function(self.name, self.body_node, self.arg_names, self.should_auto_return)

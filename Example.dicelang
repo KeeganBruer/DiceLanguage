@@ -1,7 +1,22 @@
-function Character() {	
-	this.hp = 100
+function Character(name, hp, ac) {
+	this.name = if name == null "Default" else name
+	this.hp = if hp == null 100 else hp
+	println(this.hp)
+	this.ac = if ac == null 10 else ac
 	
 	this.bow_attack = function(number, advantage_count, target) {
+		println("hp:")
+		println(this)
+		if number == null {
+			number = 1
+		}
+		if advantage_count == null {
+			advantage_count = 0
+		}
+		if target == null {
+			println("target entity not given")
+			return
+		}
 		let rolls = [] + (number * (advantage_count+1))d20
 		let inc = (advantage_count+1)
 		if advantage_count < 0 {
@@ -30,6 +45,14 @@ function Character() {
 	}
 }
 
+function main() {
+	let char = Character("TheStonedElephant", 50, 10)
+	println("character")
+	println(char)
+	let char2 = Character()
+	char.bow_attack(2, 1, {"ac":10})
+}
+
 
 function sum(a) {
 	let s = 0
@@ -52,10 +75,5 @@ function print_attack(attack) {
 	println(attack[3])
 }
 
-let char = Character()
-let char2 = Character()
-char2.hp = 30
-println(char)
-println(char2)
-char.bow_attack(2, 1, {"ac":10})
+main()
 
