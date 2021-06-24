@@ -662,7 +662,10 @@ class Parser():
             ))
         res.register_advancement()
         self.advance()
-        return res.success(FuncDefNode(var_name_tok, args_name_toks, node_to_return, False))
+        should_auto_return = False
+        if var_name_tok == None:
+            should_auto_return = True
+        return res.success(FuncDefNode(var_name_tok, args_name_toks, node_to_return, should_auto_return))
     #############################
     ##
     ##  

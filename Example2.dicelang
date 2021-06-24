@@ -1,0 +1,21 @@
+
+
+function main() {
+	let sample = 500d20;
+	let stats = analyze_sample(sample, 20)
+	println(stats)
+}
+
+function analyze_sample(array, max_number) {
+	let stat_count = {}
+	for i=0 to len(array) {
+		if stat_count["Number of "+array[i]+"s"] == null {
+			stat_count["Number of "+array[i]+"s"] = 0
+		}
+		stat_count["Number of "+array[i]+"s"] += 1
+	}
+	return stat_count
+}
+
+main()
+

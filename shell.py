@@ -12,6 +12,7 @@ global_symbol_table.set("print", BuiltinFunction.print)
 global_symbol_table.set("println", BuiltinFunction.println)
 global_symbol_table.set("true_indexs", BuiltinFunction.true_indexs)
 global_symbol_table.set("len", BuiltinFunction.len)
+global_symbol_table.set("sum", BuiltinFunction.sum)
 global_symbol_table.set("clear", BuiltinFunction.clear)
 global_symbol_table.set("exit", BuiltinFunction.exit)
 

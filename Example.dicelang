@@ -50,7 +50,7 @@ function main() {
 	println("character")
 	println(char)
 	let char2 = Character()
-	char.bow_attack(2, 1, {"ac":10})
+	char.bow_attack(2, 1, char2)
 }
 
 

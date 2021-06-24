@@ -259,8 +259,6 @@ class Interpreter():
         
     def visit_FuncDefNode(self, node, context):
         res = RTResult()
-        if context.parent:
-            print(context.symbol_table)
         func_name = node.var_name_tok.value if node.var_name_tok else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.args_name_toks]
@@ -278,6 +276,9 @@ class Interpreter():
         value_to_call = res.register(self.visit(node.node_to_call, context))
         if res.should_return(): return res
         value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
+        if (value_to_call.def_args):
+            for arg_node in value_to_call.def_args:
+                args.append(arg_node)
         for arg_node in node.arg_nodes:
             args.append(res.register(self.visit(arg_node, context)))
             if res.should_return(): return res
@@ -578,6 +579,17 @@ class String(Value):
             return Number.false.set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
+    def get(self, other):
+        if isinstance(other, String) and other.value == "format":
+            element = BuiltinFunction("string_format", def_args=[self])
+            return element.set_context(self.context), None
+        elif isinstance(other, Number) or isinstance(other, String):
+            try:
+                element = self.elements[other.value]
+            except:
+                return Number.null.set_context(self.context), None
+            return element.set_context(self.context), None
+        return None, Value.illegal_operation(self, other)
     def is_true(self):
         return len(self.value) > 0
     def copy(self):
@@ -607,6 +619,14 @@ class List(Value):
             sum += other.value
             return Number(sum).set_context(self.context), None
         return None, Value.illegal_operation(self, other)
+    def multed_by(self, other):
+        if isinstance(other, Number):
+            new_list = self.copy()
+            item_to_add = self.elements[:]
+            for i in range(other.value-1):
+               new_list.elements.extend(item_to_add)
+            return new_list, None
+        return None, self.illegal_operation(other)
     def comparison_gt(self, other):
         if isinstance(other, Number):
             bool_arr = []
@@ -664,8 +684,18 @@ class Dict(Value):
         else:
             return None, Value.illegal_operation(self, other)
     def get(self, other):
-        if isinstance(other, Number) or isinstance(other, String):
+        if isinstance(other, String) and other.value == "pretty":
+            element = BuiltinFunction("dict_print", def_args=[self])
+            return element.set_context(self.context), None
+        if isinstance(other, BaseFunction):
             element = self.elements[other.value]
+            print(element.name)
+            return element.set_context(self.context), None
+        elif isinstance(other, Number) or isinstance(other, String):
+            try:
+                element = self.elements[other.value]
+            except:
+                return Number.null.set_context(self.context), None
             return element.set_context(self.context), None
         return None, Value.illegal_operation(self, other)
     def set(self, other, value):
@@ -696,13 +726,18 @@ class Dict(Value):
             i+=1
             
         return "{" + res + "}"
+    def __iter__(self):
+        for key in self.elements:
+            yield key, self.elements[key]
+
     
 
 class BaseFunction(Value):
-    def __init__(self, name):
+    def __init__(self, name, def_args=None):
         super().__init__()
         self.name = name or "<anonymous>"
         self.is_anonymous = self.name == "<anonymous>"
+        self.def_args = def_args
     def generate_new_context(self):
         new_context = Context(self.name, self.context, self.pos_start)
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
@@ -723,8 +758,13 @@ class BaseFunction(Value):
             ))
         return res.success(None)
     def populate_args(self, arg_names, args, exec_ctx):
-        for i in range(len(arg_names)):
-            arg_name = arg_names[i]
+        count = 0
+        for i in range(len(args)):
+            if i < len(arg_names):
+                arg_name = arg_names[i]
+            else:
+                arg_name = "arg{0}".format(count)
+                count+=1
             arg_value = args[i] if i < len(args) else Number.null
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
@@ -746,23 +786,18 @@ class Function(BaseFunction):
         self.arg_names = arg_names
         self.should_auto_return = should_auto_return
         self.parent_context = parent
-        print(parent)
     def execute(self, args):
         res = RTResult()
         interpreter = Interpreter()
        
         exec_context = self.generate_new_context()
-        
-        #print("START {} END".format(self.context.symbol_table.get("this")))
         if not self.is_anonymous:
             exec_context.symbol_table.set("this", Dict({"context":self.parent_context}))
         self.check_and_populate_args(self.arg_names, args, exec_context)
         
         value = res.register(interpreter.visit(self.body_node, exec_context))
         if res.should_return() and res.func_rtn_value == None: return res
-        ret_value = (value if self.should_auto_return else None) or res.func_rtn_value or (exec_context.symbol_table.get("this") if exec_context.symbol_table.get("this").elements != {} else Number.null)
-        print("wow")
-        print(exec_context.symbol_table.get("this"))
+        ret_value = (value if self.should_auto_return else None) or res.func_rtn_value or Number.null
         return res.success(ret_value)
     def copy(self):
         copy = Function(self.name, self.body_node, self.arg_names, self.should_auto_return)
@@ -773,8 +808,8 @@ class Function(BaseFunction):
         return "<function {0}>".format(self.name)
 
 class BuiltinFunction(BaseFunction):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, def_args=None):
+        super().__init__(name, def_args=def_args)
     def execute(self, args):
         res = RTResult()
        
@@ -793,7 +828,7 @@ class BuiltinFunction(BaseFunction):
         method_name = "execute_{0}".format(self.name)
         raise Exception("No {0} method".format(method_name))
     def copy(self):
-        copy = BuiltinFunction(self.name)
+        copy = BuiltinFunction(self.name, self.def_args)
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
         return copy
@@ -805,7 +840,7 @@ class BuiltinFunction(BaseFunction):
         return RTResult().success(Number.null)
     execute_print.arg_names = ['value']
     def execute_println(self, exec_ctx):
-        print(exec_ctx.symbol_table.get("value"))
+        print(exec_ctx.symbol_table.get("value"), end="\n")
         return RTResult().success(Number.null)
     execute_println.arg_names = ['value']
     def execute_clear(self, exec_ctx):
@@ -816,6 +851,37 @@ class BuiltinFunction(BaseFunction):
         arr = exec_ctx.symbol_table.get("array")
         return RTResult().success(Number(len(arr.elements)))
     execute_len.arg_names = ["array"]
+    def execute_sum(self, exec_ctx):
+        arr = exec_ctx.symbol_table.get("array")
+        s = 0
+        for element in arr.elements:
+            s += element.value
+        return RTResult().success(Number(s))
+    execute_sum.arg_names = ["array"]
+    def execute_dict_print(self, exec_ctx):
+        arr = exec_ctx.symbol_table.get("dict")
+        rtn = "{\n"
+        for key, el in arr:
+            rtn += "\t{0}: {1}\n".format(key, el)
+        rtn += "}\n"
+        return RTResult().success(String(rtn))
+    execute_dict_print.arg_names = ["dict"]
+    def execute_string_format(self, exec_ctx):
+        arr = exec_ctx.symbol_table.get("string")
+        rtn = arr.value
+        count = 0
+        contin = True
+        all_args = []
+        while True:
+            arg = exec_ctx.symbol_table.get("arg{0}".format(count))
+            if (not arg):
+                break
+            all_args.append(arg.value)
+            count+=1
+        print(all_args)
+        rtn = rtn.format(*all_args)
+        return RTResult().success(String(rtn))
+    execute_string_format.arg_names = ["string"]
     def execute_true_indexs(self, exec_ctx):
         arr = exec_ctx.symbol_table.get("array")
         inds = []
@@ -835,3 +901,4 @@ BuiltinFunction.println         = BuiltinFunction("println")
 BuiltinFunction.clear           = BuiltinFunction("clear")
 BuiltinFunction.exit            = BuiltinFunction("exit")
 BuiltinFunction.len             = BuiltinFunction("len")
+BuiltinFunction.sum             = BuiltinFunction("sum")
