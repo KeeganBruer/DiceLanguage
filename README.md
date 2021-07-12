@@ -1,5 +1,5 @@
-# DiceLanguage
-A simple Javascript-like language that is designed to assist in automatically rolling dice, and evaluate simple arithmatic.
+# The Dice integrated Programming Language - DIPA
+A programming language that provides an integrated way to generate an array of random numbers (dice). The language is built around the evaluation and arithmetic of dice. For example, the language evaluates "2d20" and generates an array of size two with random numbers between 1-20 (inclusively).    
 
 ### RUN
 usage: shell.py [-h] [-i] [-s] [FILE [FILE ...]]
