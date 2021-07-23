@@ -1,4 +1,5 @@
-##Lexar:
+## Lexar:
+```
 	NEWLINE 	: \n | ;<br>
 	IDENTIFIER	: a-Z (a-Z | 0-9 | .)*<br>
 	EE			: ==<br>
@@ -18,9 +19,10 @@
 	INT 		: (0-9)+ <br>
 	FLOAT 		: (0-9)* (. (0-9)*) <br>
 	STRING		: " (any characters) " <br>
+```
 
-
-##Parser:
+## Parser:
+```
 	program 	: statements
 	
 	statements	: NEWLINE* statement (NEWLINE+ statement) NEWLINE*
@@ -53,3 +55,4 @@
 	if-expr		: KEYWORD:if LPAREN expr RPARENT NEWLINE* LBRAC statements RBRAC
 	
 	for-expr	: KEYWORD:for LPAREN (statement NEWLINE expr NEWLINE statement )
+```
