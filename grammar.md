@@ -1,24 +1,24 @@
 ## Lexar:
 ```
-	NEWLINE 	: \n | ;<br>
-	IDENTIFIER	: a-Z (a-Z | 0-9 | .)*<br>
-	EE			: ==<br>
-	LT			: \< <br>
-	GT			: \> <br>
-	LTE			: <= <br>
-	GTE			: >= <br>
-	EQ			: = <br>
-	PEQ			: += <br>
-	MEQ 		: -= <br>
-	PLUS		: + <br>
-	MINUS		: - <br>
-	MUL			: * <br>
-	DIV			: / <br>
-	MOD			: % <br>
-	POW 		: ^ <br> 
-	INT 		: (0-9)+ <br>
-	FLOAT 		: (0-9)* (. (0-9)*) <br>
-	STRING		: " (any characters) " <br>
+	NEWLINE 	: \n | ;
+	IDENTIFIER	: a-Z (a-Z | 0-9 | .)*
+	EE			: ==
+	LT			: \< 
+	GT			: \> 
+	LTE			: <= 
+	GTE			: >= 
+	EQ			: = 
+	PEQ			: += 
+	MEQ 		: -= 
+	PLUS		: + 
+	MINUS		: - 
+	MUL			: * 
+	DIV			: / 
+	MOD			: % 
+	POW 		: ^  
+	INT 		: (0-9)+ 
+	FLOAT 		: (0-9)* (. (0-9)*) 
+	STRING		: " (any characters) " 
 ```
 
 ## Parser:
