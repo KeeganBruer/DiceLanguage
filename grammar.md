@@ -1,4 +1,4 @@
-**Lexar:
+##Lexar:
 	NEWLINE 	: \n | ;<br>
 	IDENTIFIER	: a-Z (a-Z | 0-9 | .)*<br>
 	EE			: ==<br>
@@ -20,7 +20,7 @@
 	STRING		: " (any characters) " <br>
 
 
-**Parser:
+##Parser:
 	program 	: statements
 	
 	statements	: NEWLINE* statement (NEWLINE+ statement) NEWLINE*
