@@ -1,18 +1,12 @@
-import Token
-
-function Position() {
-	this.idx = -1
-	this.increase = function() {
-		this.idx += 1
-	}
-	return this
-}
+let Token = require("./Token.js")
+let Position = require("./Position.js")
+let Errors = require("./Errors.js")
 
 function Lexar() {
 	this.DIGITS = "0123456789"
 	this.LETTERS = "abcdefghijklmnopqrstwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	this.LETTERS_DIGITS = this.LETTERS + this.DIGITS;
-	this.pos = new Position()
+	this.pos = new Position(this)
 	this.advance = function() {
 		this.pos.increase()
 		if (this.pos.idx < this.text.length) {
@@ -32,7 +26,9 @@ function Lexar() {
 		}
 	}
 	
-	this.lex = function(text) {
+	this.lex = async function(fn, text) {
+		this.fn = fn
+		this.pos = new Position(this)
 		this.text = text
 		this.advance()
 		let tokens = []
@@ -111,11 +107,12 @@ function Lexar() {
 			} else if ("=".includes(this.current_char)) {
 				tokens.push(new Token(Token.TT_EQ))
 			} else {
-				//pass
+				return {"result":tokens, "error":new Errors.IllegalCharError("error", this.pos, this.pos)}
 			}
 			this.advance()
 		}
-		return tokens
+		tokens.push(new Token(Token.TT_EOF))
+		return {"tokens":tokens, "error":null}
 	}
 	this.make_number = function() {
 		let num = ""

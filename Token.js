@@ -6,7 +6,13 @@ function Token(type_, value_) {
 			return "" +this.type_ + ":" + this.value_ + "";
 		}
 		return ""+this.type_+""
-	};
+	}
+	this.matches = function(type_, value_) {
+		if (type_ == this.type_ && value_ == this.value_) {
+			return true
+		}
+		return false
+	}
 	return this
 }
 Token.TT_IDENTIFIER = "TT_IDENTIFIER"
@@ -39,6 +45,7 @@ Token.TT_POWEQ		= Token.TT_POW+"EQ"
 Token.TT_NOT		= "TT_NOT"
 Token.TT_NOTEQ		= Token.TT_NOT+"EQ"
 Token.TT_DICE		= "TT_DICE"
+Token.TT_EOF		= "TT_EOF"
 
 Token.KEYWORDS 		= [
 	"if",
