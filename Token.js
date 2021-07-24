@@ -1,6 +1,8 @@
-function Token(type_, value_) {
+function Token(type_, value_, pos_start, pos_end) {
 	this.type_ = type_
 	this.value_ = value_
+	this.pos_start = pos_start
+	this.pos_end = pos_end
 	this.toString = function(obj) {
 		if (this.value_) {
 			return "" +this.type_ + ":" + this.value_ + "";

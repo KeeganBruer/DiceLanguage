@@ -14,49 +14,61 @@ function Parser() {
             this.current_tok = this.tokens[this.tok_idx]
 		}
 	}
-	this.parse_tokens = async function(tokens) {
+	this.parse_tokens = async function(fn, text, tokens) {
+		this.fn = fn;
+		this.text = text
 		this.tok_idx = -1
 		this.tokens = tokens
-		let res = await this.statements()
-		if (!res.error && !this.current_tok.matches(Token.TT_EOF, undefined)) {
-			return res.failure(
-                Errors.InvalidSyntaxError(
-                    "Expected int or float",
-					this.current_tok.pos_start,
-                    this.current_tok.pos_end
-                )
-            )
-		}
+		this.advance()
+		let res = await this.expr()
+		
 		return res
 	}
-	this.statements = async function() {
+	this.bin_op = function(func, ops, func2) {
 		let res = new ParseResult()
-		let statements = []
-		res.register_advancement()
-		this.advance()
-		while (this.current_tok.matches(Token.TT_NEWLINE)) { //skip over any newlines
+		let left = res.register(func())
+		if (res.should_return()) {return res}
+		while (ops.includes(this.current_tok.type_)) {
+			let op_tok = this.current_tok;
 			res.register_advancement()
 			this.advance()
-		}
-		let statement = res.register(this.statement())
-		if (res.should_return()) {return res}
-        statements.push(statement)
-		while (!this.current_tok.matches(Token.TT_EOF)) { //skip over any newlines
-			statement = res.register(this.statement())
+			let right;
+			if (func2 != undefined) {
+				right = res.register(func2())
+			} else {
+				right = res.register(func())
+			}
 			if (res.should_return()) {return res}
-			statements.push(statement)
+			left = new Nodes.BinaryOpNode(left, op_tok, right)
 		}
-		return res.success(new Nodes.ListNode(statements))
+		return res.success(left)
 	}
-	
-	this.statement = function() {
+	this.bin_op = this.bin_op.bind(this)
+	this.factor = function() {
 		let res = new ParseResult()
-		res.success(new Nodes.NumberNode(this.current_tok))
-		if (res.should_return()) {return res}
-		res.register_advancement()
-		this.advance()
+		let tok = this.current_tok
+		if ([Token.TT_INT, Token.TT_FLOAT].includes(tok.type_)) {
+			res.register_advancement()
+			this.advance()
+			return res.success(new Nodes.NumberNode(tok))
+		}
+		return res.failure(new Errors.InvalidSyntaxError(this, "", tok.pos_start, tok.pos_end))
+	}
+	this.factor = this.factor.bind(this)
+	
+	this.term = function() {
+		let res = this.bin_op(this.factor, [Token.TT_MULT, Token.TT_DIV])
 		return res
 	}
+	this.term = this.term.bind(this)
+	
+	this.expr = async function() {
+		let res = this.bin_op(this.term, [Token.TT_PLUS, Token.TT_MINUS])
+		return res
+	}
+	this.expr = this.expr.bind(this)
+
+	
 	return this
 }
 

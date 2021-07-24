@@ -44,5 +44,9 @@ function ParseResult() {
 		}
         return this
 	}
+	this.toString = function() {
+		let rtn = this.node.toString()
+		return rtn;
+	}
 }
 module.exports = ParseResult

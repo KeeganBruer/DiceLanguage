@@ -48,8 +48,7 @@
 				
 	power		: atom (POW factor)*
 				
-	atom		: INT (IDENTIFIER:d INT)
-			: FLOAT|STRING
+	atom		: INT | FLOAT| STRING |DICE
 			: LPAREN expr RPAREN
 				  
 	if-expr		: KEYWORD:if LPAREN expr RPARENT NEWLINE* LBRAC statements RBRAC

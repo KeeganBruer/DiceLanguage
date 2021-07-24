@@ -12,6 +12,9 @@ function Position(lexar, idx, line, col) {
 			this.col = 0
 		}
 	}
+	this.copy = function() {
+		return new Position(this.lexar, this.idx, this.line, this.col)
+	}
 	return this
 }
 

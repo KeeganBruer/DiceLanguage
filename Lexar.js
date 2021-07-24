@@ -78,23 +78,23 @@ function Lexar() {
 				tokens.push(this.make_pow())
 				continue
 			} else if ("(".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_LPAREN))
+				tokens.push(new Token(Token.TT_LPAREN, this.pos, this.pos))
 			} else if (")".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_RPAREN))
+				tokens.push(new Token(Token.TT_RPAREN, this.pos, this.pos))
 			} else if ("[".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_LSQUARE))
+				tokens.push(new Token(Token.TT_LSQUARE, this.pos, this.pos))
 			} else if ("]".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_RSQUARE))
+				tokens.push(new Token(Token.TT_RSQUARE, this.pos, this.pos))
 			} else if ("{".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_LBRAC))
+				tokens.push(new Token(Token.TT_LBRAC, this.pos, this.pos))
 			} else if ("}".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_RBRAC))
+				tokens.push(new Token(Token.TT_RBRAC, this.pos, this.pos))
 			} else if (",".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_COMMA))
+				tokens.push(new Token(Token.TT_COMMA, this.pos, this.pos))
 			} else if (".".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_DOT))
+				tokens.push(new Token(Token.TT_DOT, this.pos, this.pos))
 			} else if (":".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_COLON))
+				tokens.push(new Token(Token.TT_COLON, this.pos, this.pos))
 			} else if ("!".includes(this.current_char)) {
 				tokens.push(this.make_not_operator())
 				continue
@@ -105,17 +105,18 @@ function Lexar() {
 				tokens.push(this.make_greater_than())
 				continue
 			} else if ("=".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_EQ))
+				tokens.push(new Token(Token.TT_EQ, this.pos, this.pos))
 			} else {
-				return {"result":tokens, "error":new Errors.IllegalCharError("error", this.pos, this.pos)}
+				return {"result":tokens, "error":new Errors.IllegalCharError(this, "Illegal Character \'"+ this.current_char+"\'", this.pos, this.pos)}
 			}
 			this.advance()
 		}
-		tokens.push(new Token(Token.TT_EOF))
+		//tokens.push(new Token(Token.TT_EOF))
 		return {"tokens":tokens, "error":null}
 	}
 	this.make_number = function() {
 		let num = ""
+		let pos_start = this.pos.copy()
 		while (this.current_char != null && (this.DIGITS + ".d").includes(this.current_char)) {
 			num += this.current_char
 			this.advance()
@@ -132,28 +133,30 @@ function Lexar() {
 				die_type = "FLOAT"
 				die_val = parseFloat(die_val)
 			}
-			return new Token(Token.TT_DICE, [!isNaN(count) ? count : 1, die_type, die_val])
+			return new Token(Token.TT_DICE, [!isNaN(count) ? count : 1, die_type, die_val], pos_start, this.pos.copy())
 		}
 		if (num.includes(".")) {
-			return new Token(Token.TT_FLOAT, parseFloat(num))
+			return new Token(Token.TT_FLOAT, parseFloat(num), pos_start, this.pos.copy())
 		} else {
-			return new Token(Token.TT_INT, parseInt(num))
+			return new Token(Token.TT_INT, parseInt(num), pos_start, this.pos.copy())
 		}
 	}
 	this.make_identifier = function() {
 		let identifier = ""
+		let pos_start = this.pos.copy()
 		while (this.current_char != null && (this.LETTERS_DIGITS + "_.").includes(this.current_char)) {
 			identifier += this.current_char
 			this.advance()
 		}
 		if (Token.KEYWORDS.includes(identifier)) { //if the found identifier is a keyword.
-			return new Token(Token.TT_KEYWORD, identifier)
+			return new Token(Token.TT_KEYWORD, identifier, pos_start, this.pos.copy())
 		}
-		return new Token(Token.TT_IDENTIFIER, identifier)
+		return new Token(Token.TT_IDENTIFIER, identifier, pos_start, this.pos.copy())
 	}
 	
 	this.make_string = function() {
 		let str = ""
+		let pos_start = this.pos.copy()
 		let skip = false;
 		str+= this.current_char
 		this.advance()
@@ -167,17 +170,18 @@ function Lexar() {
 		}
 		str+= this.current_char
 		this.advance()
-		return new Token(Token.TT_STRING, str)
+		return new Token(Token.TT_STRING, str, pos_start, this.pos.copy())
 		
 	}
 	this.make_type_and_equals = function (type_) {
+		let pos_start = this.pos.copy()
 		this.advance() //advance past <
 		let new_type = type_
 		if (this.current_char == "=") {
 			new_type = Token[type_+"EQ"]
 			this.advance()
 		}
-		return new Token(new_type)
+		return new Token(new_type, undefined, pos_start, this.pos.copy())
 	}
 	this.make_plus = function() {
 		return this.make_type_and_equals(Token.TT_PLUS)

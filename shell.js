@@ -32,8 +32,12 @@ rl.on('line', (input) => {
 		console.log(result.tokens.toString())
 		
 		let parser = new Parser()
-		parser.parse_tokens(result.tokens).then((res) => {
-			console.log(res.node.toString())
+		parser.parse_tokens("<stdin>",input, result.tokens).then((res) => {
+			if (res.error) {
+				console.log(res.error.toString())
+				return;
+			}
+			console.log(res.toString())
 		})
 	});
 });
