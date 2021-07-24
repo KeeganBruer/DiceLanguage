@@ -77,24 +77,30 @@ function Lexar() {
 			} else if ("^".includes(this.current_char)) {
 				tokens.push(this.make_pow())
 				continue
+			} else if ("|".includes(this.current_char)) {
+				tokens.push(this.make_or())
+				continue
+			} else if ("&".includes(this.current_char)) {
+				tokens.push(this.make_and())
+				continue
 			} else if ("(".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_LPAREN, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_LPAREN, undefined, this.pos, this.pos))
 			} else if (")".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_RPAREN, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_RPAREN, undefined, this.pos, this.pos))
 			} else if ("[".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_LSQUARE, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_LSQUARE, undefined, this.pos, this.pos))
 			} else if ("]".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_RSQUARE, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_RSQUARE, undefined, this.pos, this.pos))
 			} else if ("{".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_LBRAC, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_LBRAC, undefined, this.pos, this.pos))
 			} else if ("}".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_RBRAC, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_RBRAC, undefined, this.pos, this.pos))
 			} else if (",".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_COMMA, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_COMMA, undefined, this.pos, this.pos))
 			} else if (".".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_DOT, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_DOT, undefined, this.pos, this.pos))
 			} else if (":".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_COLON, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_COLON, undefined, this.pos, this.pos))
 			} else if ("!".includes(this.current_char)) {
 				tokens.push(this.make_not_operator())
 				continue
@@ -173,6 +179,22 @@ function Lexar() {
 		return new Token(Token.TT_STRING, str, pos_start, this.pos.copy())
 		
 	}
+	this.make_or = function() {
+		this.advance()
+		if (this.current_char == "|") {
+			this.advance()
+			return new Token(Token.TT_OR)
+		}
+		return new Token(Token.TT_BITOR)
+	}
+	this.make_and = function() {
+		this.advance()
+		if (this.current_char == "&") {
+			this.advance()
+			return new Token(Token.TT_AND)
+		}
+		return new Token(Token.TT_BITAND)
+	}
 	this.make_type_and_equals = function (type_) {
 		let pos_start = this.pos.copy()
 		this.advance() //advance past <
@@ -187,7 +209,7 @@ function Lexar() {
 		return this.make_type_and_equals(Token.TT_PLUS)
 	}
 	this.make_minus = function() {
-		return this.make_type_and_equals(Token.TT_PLUS)
+		return this.make_type_and_equals(Token.TT_MINUS)
 	}
 	this.make_mult = function() {
 		return this.make_type_and_equals(Token.TT_MULT)

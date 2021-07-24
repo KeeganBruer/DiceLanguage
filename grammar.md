@@ -3,6 +3,8 @@
 	NEWLINE 	: \n | ;
 	IDENTIFIER	: a-Z (a-Z | 0-9 | .)*
 	EE		: ==
+	OR		: ||
+	AND		: &&
 	LT		: \< 
 	GT		: \> 
 	LTE		: <= 
@@ -31,10 +33,10 @@
 			: KEYWORD:continue
 			: KEYWORD:break
 			: KEYWORD:let IDENTIFIER EQ expr
-			: IDENTIFIER (EQ | PEQ | MEQ) expr
+			: IDENTIFIER (EQ | PLUSEQ | MINUSEQ) expr
 			: expr
 	
-	expr		: comp-expr ((KEYWORD:and|KEYWORD:or) comp-expr)*
+	expr		: comp-expr ((AND|OR) comp-expr)*
 	
 	comp-expr	: KEYWORD:not comp-expr
 			: arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
@@ -48,7 +50,7 @@
 				
 	power		: atom (POW factor)*
 				
-	atom		: INT | FLOAT| STRING |DICE
+	atom		: INT|FLOAT|STRING|DICE
 			: LPAREN expr RPAREN
 				  
 	if-expr		: KEYWORD:if LPAREN expr RPARENT NEWLINE* LBRAC statements RBRAC

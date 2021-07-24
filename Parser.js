@@ -24,6 +24,9 @@ function Parser() {
 		
 		return res
 	}
+	/*
+		Binary Operation Helper
+	*/
 	this.bin_op = function(func, ops, func2) {
 		let res = new ParseResult()
 		let left = res.register(func())
@@ -43,32 +46,74 @@ function Parser() {
 		}
 		return res.success(left)
 	}
+	
 	this.bin_op = this.bin_op.bind(this)
-	this.factor = function() {
+	/*
+		ATOM:
+			: INT|FLOAT|STRING|DICE
+			: LPAREN expr RPAREN
+	*/
+	this.atom = function() {
 		let res = new ParseResult()
 		let tok = this.current_tok
 		if ([Token.TT_INT, Token.TT_FLOAT].includes(tok.type_)) {
 			res.register_advancement()
 			this.advance()
 			return res.success(new Nodes.NumberNode(tok))
+		} else if ([Token.TT_DICE].includes(tok.type_)) {
+			res.register_advancement()
+			this.advance()
+			return res.success(new Nodes.DiceNode(tok))
+		} else if ([Token.TT_STRING].includes(tok.type_)) {
+			res.register_advancement()
+			this.advance()
+			return res.success(new Nodes.StringNode(tok))
 		}
 		return res.failure(new Errors.InvalidSyntaxError(this, "", tok.pos_start, tok.pos_end))
 	}
+	/*
+		POWER:
+			: atom (POW factor)*
+	*/
+	this.power = function() {
+		
+	}
+	/*
+		FACTOR: 
+			: (PLUS|MINUS) factor
+			: power
+	*/
+	this.factor = function() {
+		let res = new ParseResult()
+		let tok = this.current_tok
+		if ([Token.TT_PLUS, Token.TT_MINUS].includes(tok.type_)) {
+			res.register_advancement()
+			this.advance()
+			let fac = res.register(this.atom())
+			return res.success(new Nodes.UrinaryOpNode(tok, fac))
+		}
+		let atom = res.register(this.atom())
+		if (res.should_return()) {return res}
+		return res.success(atom)
+	}
 	this.factor = this.factor.bind(this)
-	
+	/*
+		TERM:
+	*/
 	this.term = function() {
 		let res = this.bin_op(this.factor, [Token.TT_MULT, Token.TT_DIV])
 		return res
 	}
 	this.term = this.term.bind(this)
-	
+	/*
+		EXPR:
+	*/
 	this.expr = async function() {
 		let res = this.bin_op(this.term, [Token.TT_PLUS, Token.TT_MINUS])
 		return res
 	}
 	this.expr = this.expr.bind(this)
 
-	
 	return this
 }
 
