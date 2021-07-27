@@ -36,3 +36,10 @@ function InvalidSyntaxError(system, details, pos_start, pos_end) {
 	return this
 }
 exports.InvalidSyntaxError = InvalidSyntaxError
+
+function RuntimeError(system, details, pos_start, pos_end) {
+	Error.call(this, system, "Runtime Error", details, pos_start, pos_end);
+	
+	return this
+}
+exports.RuntimeError = RuntimeError

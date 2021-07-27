@@ -24,9 +24,7 @@
 ```
 
 ## Parser:
-```
-	program 	: statements
-	
+```	
 	statements	: NEWLINE* statement (NEWLINE+ statement) NEWLINE*
 	
 	statement 	: KEYWORD:return expr
@@ -38,7 +36,7 @@
 	
 	expr		: comp-expr ((AND|OR) comp-expr)*
 	
-	comp-expr	: KEYWORD:not comp-expr
+	comp-expr	: NOT comp-expr
 			: arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
 				
 	arith-expr	: term ((PLUS|MINUS) term)*
@@ -53,7 +51,7 @@
 	atom		: INT|FLOAT|STRING|DICE
 			: LPAREN expr RPAREN
 				  
-	if-expr		: KEYWORD:if LPAREN expr RPARENT NEWLINE* LBRAC statements RBRAC
+	if-expr		: KEYWORD:if LPAREN expr RPAREN NEWLINE* LBRAC statements RBRAC
 	
-	for-expr	: KEYWORD:for LPAREN (statement NEWLINE expr NEWLINE statement )
+	for-expr	: KEYWORD:for LPAREN statement NEWLINE expr NEWLINE statement RPAREN NEWLINE* LBRAC statements RBRAC
 ```

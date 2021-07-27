@@ -4,7 +4,7 @@ let Errors = require("./Errors.js")
 
 function Lexar() {
 	this.DIGITS = "0123456789"
-	this.LETTERS = "abcdefghijklmnopqrstwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	this.LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	this.LETTERS_DIGITS = this.LETTERS + this.DIGITS;
 	this.pos = new Position(this)
 	this.advance = function() {
@@ -53,6 +53,8 @@ function Lexar() {
 				}
 				tokens.push(this.make_number())
 				continue
+			} else if (";".includes(this.current_char)) {
+				tokens.push(new Token(Token.TT_NEWLINE, undefined, this.pos, this.pos))
 			} else if (this.LETTERS.includes(this.current_char)) {
 				tokens.push(this.make_identifier())
 				continue
@@ -111,13 +113,13 @@ function Lexar() {
 				tokens.push(this.make_greater_than())
 				continue
 			} else if ("=".includes(this.current_char)) {
-				tokens.push(new Token(Token.TT_EQ, this.pos, this.pos))
+				tokens.push(new Token(Token.TT_EQ, undefined, this.pos, this.pos))
 			} else {
 				return {"result":tokens, "error":new Errors.IllegalCharError(this, "Illegal Character \'"+ this.current_char+"\'", this.pos, this.pos)}
 			}
 			this.advance()
 		}
-		//tokens.push(new Token(Token.TT_EOF))
+		tokens.push(new Token(Token.TT_EOF))
 		return {"tokens":tokens, "error":null}
 	}
 	this.make_number = function() {

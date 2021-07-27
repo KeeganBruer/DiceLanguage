@@ -10,7 +10,9 @@ function Token(type_, value_, pos_start, pos_end) {
 		return ""+this.type_+""
 	}
 	this.matches = function(type_, value_) {
-		if (type_ == this.type_ && value_ == this.value_) {
+		if (type_ == this.type_ && value_ == undefined) {
+			return true
+		} else if (type_ == this.type_ && value_ == this.value_) {
 			return true
 		}
 		return false
@@ -52,13 +54,14 @@ Token.TT_NOT		= "TT_NOT"
 Token.TT_NOTEQ		= Token.TT_NOT+"EQ"
 Token.TT_DICE		= "TT_DICE"
 Token.TT_EOF		= "TT_EOF"
+Token.TT_NEWLINE	= "TT_NEWLINE"
 
 Token.KEYWORDS 		= [
 	"if",
 	"else",
 	"while",
 	"function",
-	"d"
+	"let"
 ]
 
 module.exports = Token

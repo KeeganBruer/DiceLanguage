@@ -12,6 +12,7 @@ function ParseResult() {
 		}
         return res.node
 	}
+	
     this.register_advancement = function(){
         this.last_registered_advance_count = 1
         this.advance_count += 1
@@ -23,7 +24,7 @@ function ParseResult() {
     this.try_register = function(res) {
         if (res.error){
             this.to_reverse_count = res.advance_count
-            return None
+            return undefined
         } else {
             return this.register(res)
 		}
