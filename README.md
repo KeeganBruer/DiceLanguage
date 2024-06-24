@@ -3,8 +3,18 @@ A programming language that provides an integrated way to generate an array of r
 
 Grammer Rules [here](grammar.md)
 
-### RUN
-usage: shell.js
+## Requirements:
+- MongoDB database
 
-Run an interactive prompt
->node shell.py
+## Steps:
+
+1. Setup "config.js" according to your environment
+2. Run an interactive prompt 
+    > node shell.py
+
+## Examples
+
+```
+
+
+```

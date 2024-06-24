@@ -2,6 +2,7 @@ let fs = require("fs")
 let DIPLA = require("./DIPLA.js")
 let Databases = require("./Databases.js")
 let Types = require("./Types.js")
+const { MONGO_URL } = require("./config.js")
 
 
 
@@ -10,7 +11,9 @@ const rl = require('readline').createInterface({
   output: process.stdout
 })
 async function run() {
-	let database = await new Databases.MongoDB("mongodb://127.0.0.1:27017/")
+	console.log(`Attempting Connection To: \"${MONGO_URL}\"`)
+	console.log("Awaiting Database Connection...")
+	let database = await new Databases.MongoDB(MONGO_URL)
 	//let database = await new Databases.Default()
 	let lang = new DIPLA(database)
 	//await lang.database.set_database("eca1316b-b1e4-49f1-bfea-19feaaa256a4")
